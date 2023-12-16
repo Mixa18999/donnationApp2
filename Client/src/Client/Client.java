@@ -1,11 +1,14 @@
 package Client;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -77,7 +80,13 @@ public class Client implements Runnable {
 	
 	public static void receiveFile() throws IOException{
 			String fileContent = dataInStream.readUTF();
-			System.out.println(fileContent);
+			try (FileWriter fOut = new FileWriter("Uplata.txt");
+					BufferedWriter bwOut = new BufferedWriter(fOut);
+					PrintWriter out = new PrintWriter(bwOut)){
+				out.println(fileContent);
+			} catch (Exception e) {
+				System.out.println("Greska:" + e.getMessage());
+			}
 	}
 
 }

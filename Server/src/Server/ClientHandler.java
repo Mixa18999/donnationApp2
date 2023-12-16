@@ -44,49 +44,50 @@ public class ClientHandler extends Thread{
 			do{
 				userMenu();
 				input = clientInputStream.readLine();
-				if (!input.equals("1") && !input.equals("4")) {
-					clientOutputStream.println("Nepostojeca opcija, pokusajte ponovo.");
-					clientOutputStream.println();
+				switch (input) {
+				case "1": {
+					double iznos = 0;
+					int cvv = 0;
+					ZonedDateTime vremeUplate = ZonedDateTime.now();
+					clientOutputStream.println("Unesite vase ime:");
+					String ime = clientInputStream.readLine();
+					clientOutputStream.println("Unesite vase prezime:");
+					String prezime = clientInputStream.readLine();
+					clientOutputStream.println("Unesite vasu adresu:");
+					String adresa = clientInputStream.readLine();
+					clientOutputStream.println("Unesite broj vase platne kartice:");
+					String brKartice = clientInputStream.readLine();
+					while (!isValidCardNumber(brKartice)) {
+						clientOutputStream.println("Greska u unosu, broj kartice mora biti u formatu xxxx-xxxx-xxxx-xxxx. Pokusajte ponovo:");
+						clientOutputStream.println();
+						brKartice = clientInputStream.readLine();
+					}
+					do {
+					clientOutputStream.println("Unesite vas CVV broj[CVV broj mora imati tri cifre]:");
+					String s = clientInputStream.readLine();
+					cvv = Integer.parseInt(s);//STA AKO UKUCA SLOVO!!!!!
+					}while(!numberHasThreeDigits(cvv));
+					do {
+						clientOutputStream.println("Unesite iznos za uplatu(Minimalan iznos je 200 dinara):");
+						iznos = Double.parseDouble(clientInputStream.readLine());
+					}while(iznos<200);
+					
+					generatePayment(ime, prezime, adresa, brKartice, cvv, iznos, vremeUplate);
+					dataInStream.close();
+					dataOutStream.close();
+					break;
+				}
+				case "4":{
+					clientOutputStream.println("Dovidjenja");
+					break;
+				}
+				default:
+					throw new IllegalArgumentException("Unexpected value: " + input);
 				}
 
-			}while(!input.equals("1")&& !input.equals("4"));
+			}while(!input.equals("4"));
 			
-			if(input.equals("1")) {
-				double iznos = 0;
-				int cvv = 0;
-				ZonedDateTime vremeUplate = ZonedDateTime.now();
-				clientOutputStream.println("Unesite vase ime:");
-				String ime = clientInputStream.readLine();
-				clientOutputStream.println("Unesite vase prezime:");
-				String prezime = clientInputStream.readLine();
-				clientOutputStream.println("Unesite vasu adresu:");
-				String adresa = clientInputStream.readLine();
-				clientOutputStream.println("Unesite broj vase platne kartice:");
-				String brKartice = clientInputStream.readLine();
-				while (!isValidCardNumber(brKartice)) {
-					clientOutputStream.println("Greska u unosu, broj kartice mora biti u formatu xxxx-xxxx-xxxx-xxxx. Pokusajte ponovo:");
-					clientOutputStream.println();
-					brKartice = clientInputStream.readLine();
-				}
-				do {
-				clientOutputStream.println("Unesite vas CVV broj[CVV broj mora imati tri cifre]:");
-				String s = clientInputStream.readLine();
-				cvv = Integer.parseInt(s);//STA AKO UKUCA SLOVO!!!!!
-				}while(!numberHasThreeDigits(cvv));
-				do {
-					clientOutputStream.println("Unesite iznos za uplatu(Minimalan iznos je 200 dinara):");
-					iznos = Double.parseDouble(clientInputStream.readLine());
-				}while(iznos<200);
-				
-				generatePayment(ime, prezime, adresa, brKartice, cvv, iznos, vremeUplate);
-			}
 			
-			dataInStream.close();
-			dataOutStream.close();
-			
-			if(input.equals("4")) {
-				clientOutputStream.println("Dovidjenja");
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -124,7 +125,6 @@ public class ClientHandler extends Thread{
 		} catch (Exception e) {
 			System.out.println("Greska:" + e.getMessage());
 		}
-		System.out.println("Salje se uplatnica...");
 		sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");
 	}
 	
@@ -132,6 +132,5 @@ public class ClientHandler extends Thread{
         List<String> fileLines = Files.readAllLines(Paths.get(path));
         String fileContent = String.join("\n", fileLines);
         dataOutStream.writeUTF(fileContent);
-        System.out.println(fileContent);
 	}
 }
