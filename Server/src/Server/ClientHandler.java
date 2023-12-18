@@ -88,8 +88,6 @@ public class ClientHandler extends Thread{
 					uplata.set(ime, prezime, adresa, brKartice, cvv, iznos, vremeUplate);
 					modifyPaymentDB(uplata);
 					sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");//NE PREMESTAJ!!!!
-					dataInStream.close();
-					dataOutStream.close();
 					break;
 				}
 				case "2":
@@ -103,6 +101,8 @@ public class ClientHandler extends Thread{
 					break;
 				case "5":{
 					clientOutputStream.println("Dovidjenja");
+					dataInStream.close();
+					dataOutStream.close();
 					break;
 				}
 				default:
@@ -110,8 +110,6 @@ public class ClientHandler extends Thread{
 				}
 
 			}while(!input.equals("5"));
-			
-			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -185,6 +183,7 @@ public class ClientHandler extends Thread{
         List<String> fileLines = Files.readAllLines(Paths.get(path));
         String fileContent = String.join("\n", fileLines);
         dataOutStream.writeUTF(fileContent);
+        clientOutputStream.println("Uplatnica je poslata.");
 	}
 	
 	public void modifyPaymentDB(Payment payment) {
@@ -341,8 +340,8 @@ public class ClientHandler extends Thread{
 					uplata.set(regUser.getName(), regUser.getSurname(), adresa, regUser.getCardNumber(), cvv, iznos, vremeUplate);
 					modifyPaymentDB(uplata);
 					sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");//NE PREMESTAJ!!!!
-					dataInStream.close();
-					dataOutStream.close();
+					//dataInStream.close();
+					//dataOutStream.close();
 					break;
 				}
 				case "2":{

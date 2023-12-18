@@ -42,11 +42,10 @@ public class Client implements Runnable {
 				if (input.equals("Dovidjenja")) {
 					break;
 				}
+				if(input.equals("Uplatnica je poslata.")) {
+					receiveFile();
+				}
 			}
-			receiveFile();//TODO naci mesto!!!
-			dataInStream.close();
-			dataOutStream.close();
-			keyboardInput.close();
 			transportSocket.close();
 			commsSocket.close();
 		} catch (UnknownHostException e) {
