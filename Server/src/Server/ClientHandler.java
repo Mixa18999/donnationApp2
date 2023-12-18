@@ -32,6 +32,7 @@ public class ClientHandler extends Thread{
 	String dateFormat = "dd.MM.yyyy. HH:mm:ss";
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
 	String username;
+	String input;
 	
 	public ClientHandler(Socket commsSocket, Socket fileTransportSocket) {
 		this.commsSocket = commsSocket;
@@ -47,7 +48,7 @@ public class ClientHandler extends Thread{
 			dataOutStream = new DataOutputStream(fileTransportSocket.getOutputStream());
 			clientOutputStream.println("Konekcija je uspesno uspostavljena!");
 			
-			String input;
+			
 			do{
 				userMenu();
 				input = clientInputStream.readLine();
@@ -57,7 +58,7 @@ public class ClientHandler extends Thread{
 					double iznos = 0;
 					int cvv = 0;
 					ZonedDateTime vremeUplate = ZonedDateTime.now();
-					clientOutputStream.println("Unesite vase ime:");
+					clientOutputStream.println("Unesite vase ime:");//TODO Ogranicenja za ime
 					String ime = clientInputStream.readLine();
 					clientOutputStream.println("Unesite vase prezime:");
 					String prezime = clientInputStream.readLine();
@@ -86,7 +87,7 @@ public class ClientHandler extends Thread{
 					Payment uplata = new Payment();
 					uplata.set(ime, prezime, adresa, brKartice, cvv, iznos, vremeUplate);
 					modifyPaymentDB(uplata);
-					sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");
+					sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");//NE PREMESTAJ!!!!
 					dataInStream.close();
 					dataOutStream.close();
 					break;
@@ -96,6 +97,9 @@ public class ClientHandler extends Thread{
 					break;
 				case "3":
 					registration();
+					break;
+				case "4":
+					logIn();
 					break;
 				case "5":{
 					clientOutputStream.println("Dovidjenja");
@@ -180,7 +184,6 @@ public class ClientHandler extends Thread{
 	public void sendFile(String path) throws IOException {
         List<String> fileLines = Files.readAllLines(Paths.get(path));
         String fileContent = String.join("\n", fileLines);
-        System.out.println(fileContent);
         dataOutStream.writeUTF(fileContent);
 	}
 	
@@ -298,6 +301,126 @@ public class ClientHandler extends Thread{
 		}
 	}
 
+	public void logIn() throws IOException {//TODO hendluj exception
+		String username;
+		String password;
+		do {
+			clientOutputStream.println("Unesite vase korisnicko ime:");
+			username = clientInputStream.readLine();
+			clientOutputStream.println("Unesite vasu lozinku:");
+			password = clientInputStream.readLine();
+		}while(!validation(username, password));
+		//Menu for Registered users
+		String inputRMenu;
+		do {
+			regUserMenu();
+			inputRMenu = clientInputStream.readLine();
+			switch(inputRMenu) {
+				case "1":{
+					double iznos = 0;
+					int cvv = 0;
+					ZonedDateTime vremeUplate = ZonedDateTime.now();
+					RegisteredUser regUser = new RegisteredUser();
+					regUser = returnRegUserParameters(username);
+					clientOutputStream.println("Unesite vasu adresu:");
+					String adresa = clientInputStream.readLine();
+					do {
+						do {
+							clientOutputStream.println("Unesite vas CVV broj[CVV broj mora imati tri cifre]:");
+							String s = clientInputStream.readLine();
+							cvv = Integer.parseInt(s);//TODO STA AKO UKUCA SLOVO!!!!!
+						}while(!numberHasThreeDigits(cvv));
+					}while(!checkCardNumberCVV(regUser.getCardNumber(), cvv));
+					do {
+						clientOutputStream.println("Unesite iznos za uplatu(Minimalan iznos je 200 dinara):");
+						iznos = Double.parseDouble(clientInputStream.readLine());
+					}while(iznos<200);
+				
+					generatePayment(regUser.getName(), regUser.getSurname(), adresa, regUser.getCardNumber(), cvv, iznos, vremeUplate);
+					Payment uplata = new Payment();
+					uplata.set(regUser.getName(), regUser.getSurname(), adresa, regUser.getCardNumber(), cvv, iznos, vremeUplate);
+					modifyPaymentDB(uplata);
+					sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");//NE PREMESTAJ!!!!
+					dataInStream.close();
+					dataOutStream.close();
+					break;
+				}
+				case "2":{
+					totalFunds();
+					break;
+				}
+				case "3":{
+					break;
+				}
+				case "4":{
+					break;
+				}
+				default:{
+					clientOutputStream.println("Neocekivan unos, izaberite jednu od ponudjenih opcija:");
+				}
+		}
+		}while(!inputRMenu.equals("4"));
+	}
+	
+	public boolean validation(String username, String password) {
+			try (
+					FileReader fR = new FileReader("RegUsers.txt");
+					BufferedReader in = new BufferedReader(fR)){
+					boolean kraj = false;
+					String s = "";
+					while(!kraj) {
+						String pom = in.readLine();
+						if(pom==null) kraj=true;
+						else {
+							s=pom;
+							String[] separate = s.split(";");
+							if(separate[0].equals(username)&&separate[1].equals(password)) {
+								return true;
+							}
+						}
+					}
+				} catch (FileNotFoundException e) {
+					clientOutputStream.println("Nema registrovanih klijenata! Ne mozete da izvrsite prijavu dok se ne registrujete!");
+					return false;
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			return false;
+	}
 
-
+	public void regUserMenu() {
+		clientOutputStream.println("Izaberite zeljenu opciju:");
+		clientOutputStream.println("1.Uplata novca u dobrotvorne svrhe");
+		clientOutputStream.println("2.Iznos dosad prikupljenih sredstava");
+		clientOutputStream.println("3.Prikaz poslednjih deset uplata");
+		clientOutputStream.println("4.Odjava");
+	}
+	
+	public RegisteredUser returnRegUserParameters(String username) {
+		RegisteredUser regUser = new RegisteredUser();
+		try (
+				FileReader fR = new FileReader("RegUsers.txt");
+				BufferedReader in = new BufferedReader(fR)){
+				boolean kraj = false;
+				String s = "";
+				while(!kraj) {
+					String pom = in.readLine();
+					if(pom==null) kraj=true;
+					else {
+						s=pom;
+						String[] separate = s.split(";");
+						if(separate[0].equals(username)) {
+							regUser.setRegUser(username, separate[1], separate[2], separate[3], separate[4], separate[5], separate[6]);
+						}
+					}
+				}
+			} catch (FileNotFoundException e) {
+				//TODO
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		return regUser;
+	}
 }

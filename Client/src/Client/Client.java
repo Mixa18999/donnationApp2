@@ -80,7 +80,6 @@ public class Client implements Runnable {
 	
 	public static void receiveFile() throws IOException{
 			String fileContent = dataInStream.readUTF();
-			System.out.println(fileContent);
 			try (FileWriter fOut = new FileWriter("Uplata.txt");
 					BufferedWriter bwOut = new BufferedWriter(fOut);
 					PrintWriter out = new PrintWriter(bwOut)){

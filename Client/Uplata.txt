@@ -1,8 +1,8 @@
 				 ------Potvrda o uplati u dobrotvorne svrhe------
-						 18.12.2023. 19:35:37
+						 18.12.2023. 21:50:06
 Ime: m
 Prezime: m
-Adersa: m
+Adersa: Bogradska 2
 Broj kartice: 1111-1111-1111-1111   CVV broj: 111
-Iznos uplate: 1111.0 din
+Iznos uplate: 1200.0 din
 				 ------Hvala vam na donaciji------
