@@ -3,10 +3,9 @@ package Server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-//import java.util.LinkedList;
+
 
 public class Server {
-	//public static LinkedList<ClientHandler> listOfClients = new LinkedList<ClientHandler>();
 	public static void main(String[] args) {
 		int portNumber = 7272;
 		int portFileNumber = 7373;
@@ -24,7 +23,6 @@ public class Server {
 				fileTransportSocket = serverSocketFile.accept();
 				System.out.println("Konekcija je uspostavljena!");
 				ClientHandler newClient = new ClientHandler(commsSocket,fileTransportSocket);	
-				//listOfClients.add(newClient);
 				newClient.start();
 			}
 		} catch (IOException e) {

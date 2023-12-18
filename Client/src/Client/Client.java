@@ -43,9 +43,10 @@ public class Client implements Runnable {
 					break;
 				}
 			}
-			receiveFile();
+			receiveFile();//TODO naci mesto!!!
 			dataInStream.close();
 			dataOutStream.close();
+			keyboardInput.close();
 			transportSocket.close();
 			commsSocket.close();
 		} catch (UnknownHostException e) {
@@ -57,7 +58,6 @@ public class Client implements Runnable {
 		
 	}
 
-	
 	public void run() {
 		String poruka;
 
@@ -67,8 +67,8 @@ public class Client implements Runnable {
 				poruka = keyboardInput.readLine();
 				
 				serverOutputStream.println(poruka);
-
-				if (poruka.equals("4")) {
+		
+				if (poruka.equals("5")) {
 					break;
 				}
 			} catch (IOException e) {
@@ -80,6 +80,7 @@ public class Client implements Runnable {
 	
 	public static void receiveFile() throws IOException{
 			String fileContent = dataInStream.readUTF();
+			System.out.println(fileContent);
 			try (FileWriter fOut = new FileWriter("Uplata.txt");
 					BufferedWriter bwOut = new BufferedWriter(fOut);
 					PrintWriter out = new PrintWriter(bwOut)){
