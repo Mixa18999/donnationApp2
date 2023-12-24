@@ -49,7 +49,7 @@ public class Client implements Runnable {
 			transportSocket.close();
 			commsSocket.close();
 		} catch (UnknownHostException e) {
-			System.out.println("Nepoznat host!");
+			System.out.println("Server nije pronadjen!");
 		} catch (IOException e) {
 			System.out.println("Server je pao!");
 		}
@@ -84,7 +84,7 @@ public class Client implements Runnable {
 					PrintWriter out = new PrintWriter(bwOut)){
 				out.println(fileContent);
 			} catch (Exception e) {
-				System.out.println("Greska:" + e.getMessage());
+				System.out.println("Greska:" + e.getMessage());//TODO
 			}
 	}
 

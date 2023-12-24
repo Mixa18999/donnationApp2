@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Stream;
 
 
 
@@ -55,13 +56,19 @@ public class ClientHandler extends Thread{
 				switch (input) {
 				case "1": {
 					String brKartice;
+					String ime;
+					String prezime;
 					double iznos = 0;
 					int cvv = 0;
 					ZonedDateTime vremeUplate = ZonedDateTime.now();
-					clientOutputStream.println("Unesite vase ime:");//TODO Ogranicenja za ime
-					String ime = clientInputStream.readLine();
-					clientOutputStream.println("Unesite vase prezime:");
-					String prezime = clientInputStream.readLine();
+					do {
+						clientOutputStream.println("Unesite vase ime:");
+						ime = clientInputStream.readLine();
+					}while (ime.equals("") || !ime.matches("^[a-zA-Z]*$") || ime.length() < 1);
+					do {
+						clientOutputStream.println("Unesite vase prezime:");
+						prezime = clientInputStream.readLine();
+					}while (prezime.equals("") || !prezime.matches("^[a-zA-Z]*$") || prezime.length() < 1);
 					clientOutputStream.println("Unesite vasu adresu:");
 					String adresa = clientInputStream.readLine();
 					do {
@@ -75,12 +82,23 @@ public class ClientHandler extends Thread{
 						do {
 							clientOutputStream.println("Unesite vas CVV broj[CVV broj mora imati tri cifre]:");
 							String s = clientInputStream.readLine();
-							cvv = Integer.parseInt(s);//TODO STA AKO UKUCA SLOVO!!!!!
+							if(s.matches("\\d+")) {
+								cvv = Integer.parseInt(s);
+							}
+							else {
+								clientOutputStream.println("CVV moze sadrzati samo cifre!");
+							}
 						}while(!numberHasThreeDigits(cvv));
 					}while(!checkCardNumberCVV(brKartice, cvv));
 					do {
 						clientOutputStream.println("Unesite iznos za uplatu(Minimalan iznos je 200 dinara):");
-						iznos = Double.parseDouble(clientInputStream.readLine());
+						String unosIznosa = clientInputStream.readLine();
+						if(unosIznosa.matches("[0-9.]+")) {
+							iznos = Double.parseDouble(unosIznosa);
+						}else {
+							clientOutputStream.println("Iznos moze sadrzati samo cifre i tacku!");
+						}
+						
 					}while(iznos<200);
 					
 					generatePayment(ime, prezime, adresa, brKartice, cvv, iznos, vremeUplate);
@@ -111,7 +129,7 @@ public class ClientHandler extends Thread{
 
 			}while(!input.equals("5"));
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("Klijent je iznenada prekinuo vezu!");
 		}
 	}
 	
@@ -171,7 +189,7 @@ public class ClientHandler extends Thread{
 			out.println("Prezime: " + surname);
 			out.println("Adersa: " + adress );
 			out.println("Broj kartice: " + cardNumber + "   CVV broj: " + cvv);
-			out.println("Iznos uplate: " + payment + " din");
+			out.println("Iznos uplate: " + String.format("%,.2f", payment) + " din");
 			out.println("\t\t\t\t ------Hvala vam na donaciji------");
 		} catch (Exception e) {
 			System.out.println("Greska:" + e.getMessage());
@@ -190,7 +208,7 @@ public class ClientHandler extends Thread{
 		try (FileWriter fOut = new FileWriter("Payments.txt",true); ///try with resources
 				BufferedWriter bwOut = new BufferedWriter(fOut);
 				PrintWriter out = new PrintWriter(bwOut)){
-			out.println(payment.getName()+";"+payment.getSurname()+";"+payment.getAdress()+";"+payment.getCardNumber()+";"+payment.getCvv()+";"+payment.getPayment()+";"+payment.getTime().format(formatter));
+			out.println(payment.getName()+";"+payment.getSurname()+";"+payment.getAdress()+";"+payment.getCardNumber()+";"+payment.getCvv()+";"+String.format("%,.2f", payment.getPayment())+";"+payment.getTime().format(formatter));
 		} catch (Exception e) {
 			System.out.println("Greska:" + e.getMessage());
 		}
@@ -209,10 +227,10 @@ public class ClientHandler extends Thread{
 					else {
 						s=pom;
 						String[] separate = s.split(";");
-						total+=Double.parseDouble(separate[5]); //TODO Formatiraj decimale
+						total+=Double.parseDouble(separate[5]); 
 					}
 				}
-				clientOutputStream.println("Ukupno je prikupljeno: " + total + " dinara");
+				clientOutputStream.println("Ukupno je prikupljeno: " + String.format("%,.2f", total) + " dinara");
 			} catch (FileNotFoundException e) {
 				clientOutputStream.println("Nema prikupljenih novcanih sredstava.");
 			} catch (IOException e1) {
@@ -248,11 +266,11 @@ public class ClientHandler extends Thread{
 		do {
 			clientOutputStream.println("Unesite broj vase platne kartice u formatu [xxxx-xxxx-xxxx-xxxx], gde je x broj:");
 			cardNumber = clientInputStream.readLine();
-		}while (!isValidCardNumber(cardNumber));
-		//do {
+		}while (!(isValidCardNumber(cardNumber)&&checkCardNumberInDB(cardNumber)));
+		do {
 			clientOutputStream.println("Unesite vas email:");
 			email = clientInputStream.readLine();
-		//}while(!EmailValidator.getInstance().isValid(email));//TODO
+		}while(!email.matches("^(.+)@(.+)$"));
 		RegisteredUser regUser = new RegisteredUser();
 		regUser.setRegUser(username, password, name, surname, jmbg, cardNumber, email);
 		modifyRegUsersDB(regUser);
@@ -327,12 +345,22 @@ public class ClientHandler extends Thread{
 						do {
 							clientOutputStream.println("Unesite vas CVV broj[CVV broj mora imati tri cifre]:");
 							String s = clientInputStream.readLine();
-							cvv = Integer.parseInt(s);//TODO STA AKO UKUCA SLOVO!!!!!
+							if(s.matches("\\d+")) {
+								cvv = Integer.parseInt(s);
+							}
+							else {
+								clientOutputStream.println("CVV moze sadrzati samo cifre!");
+							}
 						}while(!numberHasThreeDigits(cvv));
 					}while(!checkCardNumberCVV(regUser.getCardNumber(), cvv));
 					do {
 						clientOutputStream.println("Unesite iznos za uplatu(Minimalan iznos je 200 dinara):");
-						iznos = Double.parseDouble(clientInputStream.readLine());
+						String unosIznosa = clientInputStream.readLine();
+						if(unosIznosa.matches("[0-9.]+")) {
+							iznos = Double.parseDouble(unosIznosa);
+						}else {
+							clientOutputStream.println("Iznos moze sadrzati samo cifre i tacku!");
+						}
 					}while(iznos<200);
 				
 					generatePayment(regUser.getName(), regUser.getSurname(), adresa, regUser.getCardNumber(), cvv, iznos, vremeUplate);
@@ -340,8 +368,6 @@ public class ClientHandler extends Thread{
 					uplata.set(regUser.getName(), regUser.getSurname(), adresa, regUser.getCardNumber(), cvv, iznos, vremeUplate);
 					modifyPaymentDB(uplata);
 					sendFile("D:/Program Files (x86)/Eclipse/workplace/Server/Uplata.txt");//NE PREMESTAJ!!!!
-					//dataInStream.close();
-					//dataOutStream.close();
 					break;
 				}
 				case "2":{
@@ -349,6 +375,7 @@ public class ClientHandler extends Thread{
 					break;
 				}
 				case "3":{
+					lastTenPayments();
 					break;
 				}
 				case "4":{
@@ -421,5 +448,63 @@ public class ClientHandler extends Thread{
 				e1.printStackTrace();
 			}
 		return regUser;
+	}
+
+	public boolean checkCardNumberInDB(String cardNumber) {
+		try (
+			FileReader fR = new FileReader("CardDB.txt");
+			BufferedReader in = new BufferedReader(fR)){
+			boolean kraj = false;
+			String s = "";
+			while(!kraj) {
+				String pom = in.readLine();
+				if(pom==null) kraj=true;
+				else s=pom;
+				String[] separate = s.split(" ");
+				if(separate[0].equals(cardNumber)) {
+					return true;
+				}
+				else s="";
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		clientOutputStream.println("Uneli ste broj nepostojece kartice!");
+		return false;
+	}
+	
+	public void lastTenPayments() {
+		try (
+				FileReader fR = new FileReader("Payments.txt");
+				BufferedReader in = new BufferedReader(fR);
+				Stream<String> fileStream = Files.lines(Paths.get("Payments.txt"))){
+				int n = (int) fileStream.count();
+				String s = "";
+				for(int i = 1;i<=n;i++) {
+					if(n==0) {
+						clientOutputStream.println("Nema uplata za prikaz!");
+						break;
+					}
+					s = in.readLine();
+					String[] separate = s.split(";");
+					if(n>0 && n<=10) {//TODO proveri n=0
+						clientOutputStream.println(i + ". Ime: " + separate[0] + " Prezime: " + separate[1] + " Datum i vreme uplate: " + separate[6] + " Iznos: " + separate[5]  + " dinara");
+					}
+					if(i>(n-10)) {
+						clientOutputStream.println(i + ". Ime: " + separate[0] + " Prezime: " + separate[1] + " Datum i vreme uplate: " + separate[6] + " Iznos: " + separate[5] + " dinara");
+					}
+				}
+				
+			}catch (FileNotFoundException e) {
+				clientOutputStream.println("Nema uplata za prikaz!");
+			} 
+			catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 	}
 }
